@@ -10,6 +10,7 @@ interface ListingData {
   price: number;
   category: string;
   imageUrl?: string;
+  images?: string[];
   seller: {
     id: string;
     name: string;
@@ -53,6 +54,7 @@ export default async function ListingsGridServer() {
         price: listing.price,
         category: listing.category,
         imageUrl: listing.imageUrl,
+        images: listing.images,
         seller: {
           id: listing.seller.toString(),
           name: seller?.name || 'Unknown',

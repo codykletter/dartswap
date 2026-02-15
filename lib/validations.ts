@@ -22,7 +22,11 @@ export const createListingSchema = z.object({
   price: z.number().min(0, 'Price cannot be negative'),
   category: z.string().optional().default('General'),
   imageUrl: z.string().url('Invalid image URL').optional(),
-});
+  images: z.array(z.string()).min(1, 'At least one image is required').max(4, 'Maximum 4 images allowed').optional(),
+}).refine(
+  (data) => data.images || data.imageUrl,
+  { message: 'Either images array or imageUrl is required' }
+);
 
 // Messaging validations
 export const createConversationSchema = z.object({

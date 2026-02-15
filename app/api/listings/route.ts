@@ -25,6 +25,7 @@ export async function GET(request: NextRequest) {
         price: listing.price,
         category: listing.category,
         imageUrl: listing.imageUrl,
+        images: listing.images,
         seller: {
           id: (listing.seller as any)._id.toString(),
           name: (listing.seller as any).name,
@@ -56,7 +57,19 @@ export async function POST(request: NextRequest) {
 
     // Parse and validate request body
     const body = await request.json();
+    console.log('Received listing data:', {
+      hasImages: !!body.images,
+      imagesCount: body.images?.length,
+      hasImageUrl: !!body.imageUrl,
+      firstImagePreview: body.images?.[0]?.substring(0, 50) + '...'
+    });
+    
     const validatedData = createListingSchema.parse(body);
+    console.log('Validated listing data:', {
+      hasImages: !!validatedData.images,
+      imagesCount: validatedData.images?.length,
+      hasImageUrl: !!validatedData.imageUrl
+    });
 
     // Connect to database
     await connectDB();
@@ -65,6 +78,13 @@ export async function POST(request: NextRequest) {
     const listing = await Listing.create({
       ...validatedData,
       seller: user.userId,
+    });
+    
+    console.log('Created listing in DB:', {
+      id: listing._id.toString(),
+      hasImages: !!listing.images,
+      imagesCount: listing.images?.length,
+      hasImageUrl: !!listing.imageUrl
     });
 
     // Populate seller info
@@ -79,6 +99,7 @@ export async function POST(request: NextRequest) {
           price: listing.price,
           category: listing.category,
           imageUrl: listing.imageUrl,
+          images: listing.images,
           seller: listing.seller,
           status: listing.status,
           createdAt: listing.createdAt,

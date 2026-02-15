@@ -35,7 +35,8 @@ export async function GET() {
         );
 
         // Get unread count for current user
-        const unreadCount = conv.unreadCounts.get(user.userId) || 0;
+        // Note: .lean() converts Map to plain object, so access as object property
+        const unreadCount = (conv.unreadCounts as any)?.[user.userId] || 0;
 
         return {
           id: conv._id.toString(),

@@ -13,6 +13,7 @@ interface Listing {
   price: number;
   category: string;
   imageUrl?: string;
+  images?: string[];
   seller: {
     id: string;
     name: string;
@@ -31,6 +32,7 @@ export default function ListingDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [messageLoading, setMessageLoading] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => {
     const fetchListing = async () => {
@@ -42,6 +44,13 @@ export default function ListingDetailPage() {
         }
 
         const data = await response.json();
+        console.log('Fetched listing data:', {
+          id: data.listing.id,
+          hasImages: !!data.listing.images,
+          imagesCount: data.listing.images?.length,
+          hasImageUrl: !!data.listing.imageUrl,
+          firstImagePreview: data.listing.images?.[0]?.substring(0, 50) + '...'
+        });
         setListing(data.listing);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred');
@@ -127,6 +136,29 @@ export default function ListingDetailPage() {
     month: 'long',
   });
 
+  // Get the display image - prefer images array, fallback to imageUrl
+  const displayImages = listing.images && listing.images.length > 0
+    ? listing.images
+    : listing.imageUrl
+    ? [listing.imageUrl]
+    : [];
+  const hasImages = displayImages.length > 0;
+  
+  console.log('Display images:', {
+    hasImages,
+    count: displayImages.length,
+    currentIndex: currentImageIndex,
+    firstImagePreview: displayImages[0]?.substring(0, 50) + '...'
+  });
+
+  const nextImage = () => {
+    setCurrentImageIndex((prev) => (prev + 1) % displayImages.length);
+  };
+
+  const prevImage = () => {
+    setCurrentImageIndex((prev) => (prev - 1 + displayImages.length) % displayImages.length);
+  };
+
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Back button */}
@@ -151,15 +183,44 @@ export default function ListingDetailPage() {
       </Link>
 
       <div className="card">
-        {/* Image */}
-        <div className="relative h-96 bg-border rounded-lg mb-6 overflow-hidden">
-          {listing.imageUrl ? (
-            <Image
-              src={listing.imageUrl}
-              alt={listing.title}
-              fill
-              className="object-cover"
-            />
+        {/* Image Gallery */}
+        <div className="relative h-96 bg-border rounded-lg mb-6 overflow-hidden group">
+          {hasImages ? (
+            <>
+              <Image
+                src={displayImages[currentImageIndex]}
+                alt={`${listing.title} - Image ${currentImageIndex + 1}`}
+                fill
+                className="object-cover"
+              />
+              {/* Image navigation - only show if multiple images */}
+              {displayImages.length > 1 && (
+                <>
+                  <button
+                    onClick={prevImage}
+                    className="absolute left-2 top-1/2 -translate-y-1/2 bg-black bg-opacity-50 hover:bg-opacity-75 text-white rounded-full w-10 h-10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    aria-label="Previous image"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={nextImage}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-black bg-opacity-50 hover:bg-opacity-75 text-white rounded-full w-10 h-10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    aria-label="Next image"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                  {/* Image counter */}
+                  <div className="absolute bottom-4 right-4 bg-black bg-opacity-50 text-white px-3 py-1 rounded-full text-sm">
+                    {currentImageIndex + 1} / {displayImages.length}
+                  </div>
+                </>
+              )}
+            </>
           ) : (
             <div className="flex items-center justify-center h-full text-text-secondary text-xl">
               No Image Available
@@ -205,21 +266,77 @@ export default function ListingDetailPage() {
                 {listing.seller.name.charAt(0).toUpperCase()}
               </div>
               <div>
-                <div className="text-lg font-semibold text-text">
+                <Link
+                  href={`/profile/${listing.seller.id}`}
+                  className="text-lg font-semibold text-text hover:text-primary transition-colors block"
+                >
                   {listing.seller.name}
-                </div>
+                </Link>
                 <p className="text-sm text-text-secondary">
                   Member since {memberSince}
                 </p>
+                <Link
+                  href={`/user/${listing.seller.id}/listings`}
+                  className="text-sm text-primary hover:text-primary-dark transition-colors inline-flex items-center gap-1 mt-1"
+                >
+                  View all listings
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </Link>
               </div>
             </div>
 
-            {/* Message Button */}
-            {!isOwnListing && listing.status === 'available' && (
+            {/* Message Button - Always visible with appropriate state */}
+            {isOwnListing ? (
+              <Link
+                href={`/listings/${listing.id}/edit`}
+                className="btn-secondary"
+              >
+                <span className="flex items-center gap-2">
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                    />
+                  </svg>
+                  Edit Listing
+                </span>
+              </Link>
+            ) : listing.status === 'sold' ? (
+              <button
+                disabled
+                className="btn-secondary opacity-50 cursor-not-allowed"
+              >
+                <span className="flex items-center gap-2">
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                  Sold
+                </span>
+              </button>
+            ) : (
               <button
                 onClick={handleMessageSeller}
                 disabled={messageLoading}
-                className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transition-shadow"
               >
                 {messageLoading ? (
                   <span className="flex items-center gap-2">
@@ -245,6 +362,23 @@ export default function ListingDetailPage() {
                     </svg>
                     Loading...
                   </span>
+                ) : !user ? (
+                  <span className="flex items-center gap-2">
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"
+                      />
+                    </svg>
+                    Log In to Message
+                  </span>
                 ) : (
                   <span className="flex items-center gap-2">
                     <svg
@@ -264,18 +398,6 @@ export default function ListingDetailPage() {
                   </span>
                 )}
               </button>
-            )}
-
-            {isOwnListing && (
-              <div className="text-sm text-text-secondary italic">
-                This is your listing
-              </div>
-            )}
-
-            {listing.status === 'sold' && !isOwnListing && (
-              <div className="text-sm text-text-secondary italic">
-                This item has been sold
-              </div>
             )}
           </div>
         </div>

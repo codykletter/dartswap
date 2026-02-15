@@ -8,6 +8,7 @@ export interface IListing extends Document {
   price: number;
   category: string;
   imageUrl?: string;
+  images?: string[];
   seller: mongoose.Types.ObjectId | IUser;
   status: 'active' | 'sold' | 'deleted';
   createdAt: Date;
@@ -39,6 +40,15 @@ const ListingSchema = new Schema<IListing>({
   imageUrl: {
     type: String,
     trim: true,
+  },
+  images: {
+    type: [String],
+    validate: {
+      validator: function(v: string[]) {
+        return !v || v.length <= 4;
+      },
+      message: 'Maximum 4 images allowed',
+    },
   },
   seller: {
     type: Schema.Types.ObjectId,

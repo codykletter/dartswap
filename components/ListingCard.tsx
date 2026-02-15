@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 interface ListingCardProps {
   listing: {
@@ -11,6 +12,7 @@ interface ListingCardProps {
     price: number;
     category: string;
     imageUrl?: string;
+    images?: string[];
     seller: {
       id: string;
       name: string;
@@ -20,13 +22,26 @@ interface ListingCardProps {
 }
 
 export default function ListingCard({ listing }: ListingCardProps) {
+  const router = useRouter();
+
+  const handleSellerClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    router.push(`/profile/${listing.seller.id}`);
+  };
+
+  // Get the first image - prefer images array, fallback to imageUrl
+  const displayImage = listing.images && listing.images.length > 0
+    ? listing.images[0]
+    : listing.imageUrl;
+
   return (
     <Link href={`/listings/${listing.id}`} className="card hover:border-primary transition-colors cursor-pointer">
       {/* Image */}
       <div className="relative h-48 bg-border rounded-lg mb-4 overflow-hidden">
-        {listing.imageUrl ? (
+        {displayImage ? (
           <Image
-            src={listing.imageUrl}
+            src={displayImage}
             alt={listing.title}
             fill
             className="object-cover"
@@ -53,7 +68,12 @@ export default function ListingCard({ listing }: ListingCardProps) {
         </p>
         <div className="flex items-center justify-between text-sm">
           <span className="text-text-secondary">{listing.category}</span>
-          <span className="text-text-secondary">{listing.seller.name}</span>
+          <button
+            onClick={handleSellerClick}
+            className="text-text-secondary hover:text-primary transition-colors hover:underline"
+          >
+            {listing.seller.name}
+          </button>
         </div>
       </div>
     </Link>

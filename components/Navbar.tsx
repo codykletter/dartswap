@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 
 export default function Navbar() {
-  const { user, logout, loading } = useAuth();
+  const { user, logout, loading, mounted } = useAuth();
   const router = useRouter();
 
   const handleLogout = async () => {
@@ -24,7 +24,7 @@ export default function Navbar() {
 
           {/* Navigation Links */}
           <div className="flex items-center space-x-4">
-            {!loading && (
+            {mounted && !loading && (
               <>
                 {user ? (
                   <>
@@ -35,10 +35,16 @@ export default function Navbar() {
                       Sell Item
                     </Link>
                     <Link
-                      href="/inbox"
+                      href="/my-listings"
                       className="text-text hover:text-primary transition-colors"
                     >
-                      Inbox
+                      My Listings
+                    </Link>
+                    <Link
+                      href="/messages"
+                      className="text-text hover:text-primary transition-colors"
+                    >
+                      Messages
                     </Link>
                     <div className="flex items-center space-x-3">
                       <span className="text-text-secondary text-sm">

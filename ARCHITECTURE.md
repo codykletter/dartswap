@@ -77,17 +77,17 @@
 4. Server checks if conversation exists between buyer and seller
    - If exists → Return existing conversation ID
    - If not → Create new conversation → Return new ID
-5. Client redirects to `/inbox/[conversationId]`
+5. Client redirects to `/messages/[conversationId]`
 
-#### 4. Viewing Inbox
-1. User visits `/inbox`
+#### 4. Viewing Messages (Inbox)
+1. User visits `/messages`
 2. Auth middleware verifies JWT
 3. API queries Conversations where `participants` includes current user ID
 4. Returns list sorted by `lastMessageAt` descending
 5. UI displays conversations with unread indicators
 
 #### 5. Marking Messages as Read
-1. User opens conversation in `/inbox/[id]`
+1. User opens conversation in `/messages/[id]`
 2. Client sends `PUT /api/conversations/[id]/read`
 3. Server adds current user to `readBy` array for all messages
 4. Server resets `unreadCounts[userId]` to 0 in Conversation
@@ -466,7 +466,7 @@ colors: {
 
 **States:**
 - Not logged in + Click "Message": Redirect to `/login?redirect=/listings/[id]`
-- Logged in + Click "Message": Create/find conversation → Redirect to `/inbox/[conversationId]`
+- Logged in + Click "Message": Create/find conversation → Redirect to `/messages/[conversationId]`
 - Own listing: Show "Edit" and "Mark as Sold" buttons instead
 
 #### `/login` & `/register`
@@ -482,31 +482,21 @@ colors: {
 - Email must end with `@dartmouth.edu`
 - Password minimum 8 characters
 
-#### `/inbox` - Messages Layout
-**Desktop Layout:**
-- **Left Sidebar (30%):** `InboxList`
-  - List of conversations
+#### `/messages` - Inbox Layout
+**Page Structure:**
+- **Header:** "Messages" title
+- **List of Conversations:**
   - Each item shows:
-    - Other participant's name
+    - Other participant's name (and listing title if available)
     - Last message snippet (truncated)
-    - Timestamp (relative: "2m ago", "Yesterday")
-    - Unread badge (count or dot)
-  - Active conversation highlighted
-- **Main Content (70%):** `ConversationView`
-  - Header: Other participant name, listing context
-  - Message list (scrollable, auto-scroll to bottom)
-  - Message bubbles (sender on right, recipient on left)
-  - `MessageComposer`: Input field + Send button
-
-**Mobile Layout:**
-- Default: Show `InboxList` only
-- Tap conversation: Navigate to `/inbox/[id]` showing `ConversationView` only
-- Back button returns to list
+    - Timestamp (relative time)
+    - Unread badge (if unreadCount > 0)
+  - Click navigates to `/messages/[id]`
 
 **States:**
 - Empty inbox: "No messages yet. Start browsing listings!"
-- Loading: Skeleton conversation items
-- Sending message: Disable input, show spinner
+- Loading: Skeleton items
+- Error: "Failed to load messages"
 
 #### `/sell` - Create Listing
 **Components:**
@@ -557,7 +547,7 @@ App
 2. **Empty inbox:** Show friendly empty state
 3. **Network errors:** Toast notifications with retry option
 4. **Invalid listing ID:** 404 page
-5. **Unauthorized access to conversation:** 403 error, redirect to inbox
+5. **Unauthorized access to conversation:** 403 error, redirect to messages
 6. **Message send failure:** Show error, keep message in input for retry
 
 ---
@@ -625,13 +615,11 @@ App
 3. Add conversation creation logic (find or create)
 
 ### Phase 5: Messaging UI (Day 4-5)
-1. Build inbox layout:
-   - `app/inbox/page.tsx`
-   - `app/inbox/[id]/page.tsx`
+1. Build messaging layout:
+   - `app/messages/page.tsx` (Inbox)
+   - `app/messages/[id]/page.tsx` (Conversation)
 2. Create components:
-   - `components/InboxList.tsx`
    - `components/ConversationItem.tsx`
-   - `components/ConversationView.tsx`
    - `components/MessageBubble.tsx`
    - `components/MessageComposer.tsx`
 3. Implement real-time updates (SWR with polling)
