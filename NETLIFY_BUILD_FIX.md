@@ -1,20 +1,33 @@
-# Netlify Build Fix - MongoDB Environment Variable
+# Netlify Build Fix - Complete Solution
 
-## Problem
-The Netlify build was failing with the error:
-```
-Error: Please define the MONGODB_URI environment variable inside .env.local
-```
+## Problems Identified
 
-This occurred during the "Collecting page data" phase of the Next.js build process.
+### 1. Next.js Security Vulnerability (CVE-2025-55182)
+Netlify blocked deployment because the project was using Next.js 15.1.6, which is affected by a critical security vulnerability.
 
-## Root Cause
-The `lib/mongodb.ts` file was reading `process.env.MONGODB_URI` at **module scope** (top-level), which executes during Next.js build time. When Next.js tries to collect page data for API routes, it imports the modules, triggering the environment variable check before the variable is available.
+### 2. MongoDB Environment Variable at Module Scope
+The `lib/mongodb.ts` file was reading `process.env.MONGODB_URI` at module scope, causing build failures during Next.js page data collection.
 
-## Solution Applied
+### 3. MongoDB Authentication During Build
+The home page was trying to connect to MongoDB during static generation, causing authentication errors during the build process.
 
-### Code Fix
-Modified [`lib/mongodb.ts`](lib/mongodb.ts) to move the environment variable check from module scope into the `connectDB()` function:
+## Solutions Applied
+
+### 1. Upgraded Next.js to Latest Version
+
+**Changed in [`package.json`](package.json:19):**
+- **Before:** `"next": "15.1.6"`
+- **After:** `"next": "^16.2.2"`
+
+Also upgraded `eslint-config-next` to match:
+- **Before:** `"eslint-config-next": "15.1.6"`
+- **After:** `"eslint-config-next": "^16.2.2"`
+
+This resolves the security vulnerability and allows Netlify to accept the deployment.
+
+### 2. Fixed MongoDB Connection Module
+
+**Modified [`lib/mongodb.ts`](lib/mongodb.ts:24-29):**
 
 **Before:**
 ```typescript
@@ -43,35 +56,64 @@ async function connectDB(): Promise<typeof mongoose> {
 }
 ```
 
-This ensures the environment variable is only checked when the function is actually called (at runtime), not when the module is imported (at build time).
+This ensures the environment variable is only checked when the function is called at runtime, not when the module is imported at build time.
+
+### 3. Made Home Page Dynamic
+
+**Modified [`app/page.tsx`](app/page.tsx:3):**
+
+Added `export const dynamic = 'force-dynamic';` to prevent Next.js from trying to statically generate the home page at build time. This prevents the build from attempting to connect to MongoDB.
+
+**Before:**
+```typescript
+import ListingsGridServer from '@/components/ListingsGridServer';
+
+export default function HomePage() {
+  // ...
+}
+```
+
+**After:**
+```typescript
+import ListingsGridServer from '@/components/ListingsGridServer';
+
+// Force dynamic rendering to avoid build-time database connection
+export const dynamic = 'force-dynamic';
+
+export default function HomePage() {
+  // ...
+}
+```
 
 ## Required Netlify Configuration
 
-You still need to add the `MONGODB_URI` environment variable to Netlify for runtime:
+You still need to add the `MONGODB_URI` environment variable to Netlify:
 
 1. Go to your Netlify site dashboard
 2. Navigate to: **Site settings → Environment variables**
 3. Click **Add a variable** or **Add environment variables**
 4. Add:
    - **Key:** `MONGODB_URI`
-   - **Value:** Your MongoDB connection string (e.g., `mongodb+srv://username:password@cluster.mongodb.net/dartswap?retryWrites=true&w=majority`)
+   - **Value:** Your MongoDB connection string
+     - Format: `mongodb+srv://username:password@cluster.mongodb.net/dartswap?retryWrites=true&w=majority`
+     - **Important:** Ensure the username and password are correct and the database user has proper permissions
    - **Scopes:** Select all (Production, Deploy Previews, Branch deploys)
 5. Click **Save**
 
-## Testing
+## Deployment Steps
 
-After applying this fix and setting the Netlify environment variable:
-
-1. Commit and push the changes:
+1. Commit and push all changes:
    ```bash
-   git add lib/mongodb.ts
-   git commit -m "Fix: Move MongoDB URI check to runtime to prevent build failures"
+   git add package.json package-lock.json lib/mongodb.ts app/page.tsx NETLIFY_BUILD_FIX.md
+   git commit -m "Fix: Upgrade Next.js and resolve build-time MongoDB connection issues"
    git push
    ```
 
 2. Netlify will automatically trigger a new build
-3. The build should now succeed during the "Collecting page data" phase
-4. The API routes will connect to MongoDB at runtime when requests are made
+3. The build should now succeed:
+   - ✅ Next.js security check passes (using 16.2.2)
+   - ✅ No build-time MongoDB connection attempts
+   - ✅ Function artifacts upload successfully
 
 ## Local Development
 
@@ -83,11 +125,13 @@ MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/dartswap?retryWr
 
 ## Why This Works
 
-- **Build Time:** Next.js can now import the module and collect page data without triggering the environment variable check
-- **Runtime:** When an API route is actually called, the `connectDB()` function executes and checks for the environment variable
-- **Netlify:** The environment variable is available at runtime through Netlify's environment configuration
+- **Security:** Next.js 16.2.2 is not affected by CVE-2025-55182, so Netlify allows deployment
+- **Build Time:** The home page is now dynamic, so Next.js doesn't try to connect to MongoDB during build
+- **Module Import:** The MongoDB connection module can be imported without throwing errors because the env check is inside the function
+- **Runtime:** When pages/API routes are actually called, the `connectDB()` function executes and connects to MongoDB using the Netlify environment variable
 
 ## Related Files
+- [`package.json`](package.json) - Updated Next.js version
 - [`lib/mongodb.ts`](lib/mongodb.ts) - MongoDB connection module (fixed)
-- [`app/api/auth/login/route.ts`](app/api/auth/login/route.ts) - Example API route using connectDB
+- [`app/page.tsx`](app/page.tsx) - Home page (now dynamic)
 - [`.env.example`](.env.example) - Example environment variables file
