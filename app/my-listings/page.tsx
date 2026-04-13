@@ -41,15 +41,24 @@ export default function MyListingsPage() {
 
   const fetchMyListings = async () => {
     try {
-      const response = await fetch('/api/listings');
-      if (!response.ok) throw new Error('Failed to fetch listings');
+      // Fetch all listings for all statuses to get user's complete listing collection
+      const statuses = ['active', 'hidden', 'sold'];
+      const allListings: Listing[] = [];
       
-      const data = await response.json();
-      // Filter listings to only show current user's listings (including hidden ones)
-      const myListings = data.listings.filter(
-        (listing: Listing) => listing.seller.id === user?.id
-      );
-      setListings(myListings);
+      // Fetch listings for each status
+      for (const status of statuses) {
+        const response = await fetch(`/api/listings?status=${status}`);
+        if (response.ok) {
+          const data = await response.json();
+          // Filter to only current user's listings
+          const userListings = data.listings.filter(
+            (listing: Listing) => listing.seller.id === user?.id
+          );
+          allListings.push(...userListings);
+        }
+      }
+      
+      setListings(allListings);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {

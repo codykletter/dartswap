@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useRouter, usePathname } from 'next/navigation';
 import ListingCard from '@/components/ListingCard';
 import Link from 'next/link';
 import VerificationGuard from '@/components/VerificationGuard';
@@ -27,10 +28,13 @@ type TabType = 'active' | 'hidden';
 
 export default function ProfilePage() {
   const { user, refreshUser } = useAuth();
+  const router = useRouter();
+  const pathname = usePathname();
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>('active');
+  const [refreshKey, setRefreshKey] = useState(0);
   
   // Profile editing states
   const [isEditingUsername, setIsEditingUsername] = useState(false);
@@ -44,38 +48,53 @@ export default function ProfilePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [cropperImage, setCropperImage] = useState<string | null>(null);
 
+  // Fetch fresh user data on mount to ensure username and profilePhoto are loaded
+  useEffect(() => {
+    refreshUser();
+  }, []);
+
+  // Refetch listings whenever user is available
   useEffect(() => {
     if (user) {
-      console.log('=== Profile Page: user state changed ===');
-      console.log('Username:', user.username);
-      console.log('ProfilePhoto:', user.profilePhoto);
-      console.log('HasSetUsername:', user.hasSetUsername);
-      console.log('Full user object:', user);
+      setLoading(true);
       fetchMyListings();
     }
   }, [user]);
 
-  // Add a separate useEffect to track username changes specifically
+  // Refetch listings when navigating to this page
   useEffect(() => {
-    console.log('=== Profile Page: user.username changed to:', user?.username);
-  }, [user?.username]);
+    if (user && pathname === '/profile') {
+      setRefreshKey(prev => prev + 1);
+    }
+  }, [pathname, user]);
 
-  // Add a separate useEffect to track profilePhoto changes specifically
+  // Refetch when refreshKey changes
   useEffect(() => {
-    console.log('=== Profile Page: user.profilePhoto changed to:', user?.profilePhoto);
-  }, [user?.profilePhoto]);
+    if (user && refreshKey > 0) {
+      fetchMyListings();
+    }
+  }, [refreshKey]);
 
   const fetchMyListings = async () => {
     try {
-      const response = await fetch('/api/listings');
-      if (!response.ok) throw new Error('Failed to fetch listings');
+      // Fetch all listings for all statuses to get user's complete listing collection
+      const statuses = ['active', 'hidden', 'sold'];
+      const allListings: Listing[] = [];
       
-      const data = await response.json();
-      // Filter listings to only show current user's listings (including hidden ones)
-      const myListings = data.listings.filter(
-        (listing: Listing) => listing.seller.id === user?.id
-      );
-      setListings(myListings);
+      // Fetch listings for each status
+      for (const status of statuses) {
+        const response = await fetch(`/api/listings?status=${status}`);
+        if (response.ok) {
+          const data = await response.json();
+          // Filter to only current user's listings
+          const userListings = data.listings.filter(
+            (listing: Listing) => listing.seller.id === user?.id
+          );
+          allListings.push(...userListings);
+        }
+      }
+      
+      setListings(allListings);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
