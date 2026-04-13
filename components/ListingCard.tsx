@@ -16,6 +16,8 @@ interface ListingCardProps {
     seller: {
       id: string;
       name: string;
+      username?: string;
+      profilePhoto?: string;
     };
     status: string;
   };
@@ -34,6 +36,17 @@ export default function ListingCard({ listing }: ListingCardProps) {
   const displayImage = listing.images && listing.images.length > 0
     ? listing.images[0]
     : listing.imageUrl;
+
+  // Get seller display name - prefer username, fallback to name
+  const sellerDisplayName = listing.seller.username || listing.seller.name;
+  
+  // Get seller initials for placeholder avatar
+  const sellerInitials = listing.seller.name
+    .split(' ')
+    .map(n => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
 
   return (
     <Link href={`/listings/${listing.id}`} className="card hover:border-primary transition-colors cursor-pointer">
@@ -70,9 +83,24 @@ export default function ListingCard({ listing }: ListingCardProps) {
           <span className="text-text-secondary">{listing.category}</span>
           <button
             onClick={handleSellerClick}
-            className="text-text-secondary hover:text-primary transition-colors hover:underline"
+            className="flex items-center gap-2 text-text-secondary hover:text-primary transition-colors group"
           >
-            {listing.seller.name}
+            {/* Profile Photo or Placeholder */}
+            {listing.seller.profilePhoto ? (
+              <div className="relative w-6 h-6 rounded-full overflow-hidden flex-shrink-0">
+                <Image
+                  src={listing.seller.profilePhoto}
+                  alt={sellerDisplayName}
+                  fill
+                  className="object-cover"
+                />
+              </div>
+            ) : (
+              <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
+                {sellerInitials}
+              </div>
+            )}
+            <span className="group-hover:underline">{sellerDisplayName}</span>
           </button>
         </div>
       </div>

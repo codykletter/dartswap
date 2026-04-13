@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { AuthProvider } from '@/contexts/AuthContext';
 import Navbar from '@/components/Navbar';
+import UsernameSetupWrapper from '@/components/UsernameSetupWrapper';
 
 export const metadata: Metadata = {
   title: 'DartSwap - Dartmouth Student Marketplace',
@@ -24,6 +25,7 @@ export default function RootLayout({
         <AuthProvider>
           <div className="min-h-screen flex flex-col">
             <Navbar />
+            <UsernameSetupWrapper />
             <main className="flex-1">
               {children}
             </main>

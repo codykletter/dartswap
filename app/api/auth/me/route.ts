@@ -28,7 +28,10 @@ export async function GET() {
         name: user.name,
         email: user.email,
         isVerified: dbUser.isVerified,
-      },
+        username: dbUser.username,
+        profilePhoto: dbUser.profilePhoto,
+        hasSetUsername: dbUser.hasSetUsername,
+      }
     });
   } catch (error) {
     console.error('Get current user error:', error);

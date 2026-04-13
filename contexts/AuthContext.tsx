@@ -7,6 +7,9 @@ interface User {
   name: string;
   email: string;
   isVerified: boolean;
+  username?: string;
+  profilePhoto?: string;
+  hasSetUsername?: boolean;
 }
 
 interface AuthContextType {
@@ -34,13 +37,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const checkAuth = async () => {
     try {
-      const response = await fetch('/api/auth/me');
+      const response = await fetch('/api/auth/me', {
+        cache: 'no-store', // Ensure we get fresh data
+      });
       if (response.ok) {
         const data = await response.json();
+        console.log('=== AuthContext: checkAuth() received data ===');
+        console.log('Username:', data.user?.username);
+        console.log('ProfilePhoto:', data.user?.profilePhoto);
+        console.log('HasSetUsername:', data.user?.hasSetUsername);
+        console.log('Full user object:', data.user);
+        console.log('=== Calling setUser() to update state ===');
         setUser(data.user);
+        console.log('=== setUser() called - state will update on next render ===');
+      } else {
+        setUser(null);
       }
     } catch (error) {
       console.error('Auth check failed:', error);
+      setUser(null);
     } finally {
       setLoading(false);
     }
@@ -84,7 +99,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const refreshUser = async () => {
+    console.log('refreshUser called - fetching latest user data...');
     await checkAuth();
+    console.log('refreshUser completed');
   };
 
   return (

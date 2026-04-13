@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status') || 'active';
 
     const listings = await Listing.find({ status })
-      .populate('seller', 'name email')
+      .populate('seller', 'name username profilePhoto email')
       .sort({ createdAt: -1 })
       .lean();
 
@@ -29,6 +29,8 @@ export async function GET(request: NextRequest) {
         seller: {
           id: (listing.seller as any)._id.toString(),
           name: (listing.seller as any).name,
+          username: (listing.seller as any).username,
+          profilePhoto: (listing.seller as any).profilePhoto,
         },
         status: listing.status,
         createdAt: listing.createdAt,

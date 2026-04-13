@@ -18,6 +18,8 @@ interface Listing {
   seller: {
     id: string;
     name: string;
+    username?: string;
+    profilePhoto?: string;
     email: string;
     memberSince: string;
   };
@@ -187,6 +189,17 @@ export default function ListingDetailPage() {
     month: 'long',
   });
 
+  // Get seller display name - prefer username, fallback to name
+  const sellerDisplayName = listing.seller.username || listing.seller.name;
+  
+  // Get seller initials for placeholder avatar
+  const sellerInitials = listing.seller.name
+    .split(' ')
+    .map(n => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+
   // Get the display image - prefer images array, fallback to imageUrl
   const displayImages = listing.images && listing.images.length > 0
     ? listing.images
@@ -345,15 +358,27 @@ export default function ListingDetailPage() {
           <h2 className="text-xl font-semibold text-text mb-4">Seller Information</h2>
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center text-white text-2xl font-bold">
-                {listing.seller.name.charAt(0).toUpperCase()}
-              </div>
+              {/* Profile Photo or Placeholder */}
+              {listing.seller.profilePhoto ? (
+                <div className="relative w-16 h-16 rounded-full overflow-hidden flex-shrink-0">
+                  <Image
+                    src={listing.seller.profilePhoto}
+                    alt={sellerDisplayName}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center text-white text-2xl font-bold flex-shrink-0">
+                  {sellerInitials}
+                </div>
+              )}
               <div>
                 <Link
                   href={`/profile/${listing.seller.id}`}
                   className="text-lg font-semibold text-text hover:text-primary transition-colors block"
                 >
-                  {listing.seller.name}
+                  {sellerDisplayName}
                 </Link>
                 <p className="text-sm text-text-secondary">
                   Member since {memberSince}

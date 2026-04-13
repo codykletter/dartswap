@@ -14,6 +14,9 @@ export interface IUser extends Document {
   lastCodeSentAt?: Date;
   resetToken?: string;
   resetTokenExpiry?: Date;
+  username?: string;
+  profilePhoto?: string;
+  hasSetUsername: boolean;
 }
 
 const UserSchema = new Schema<IUser>({
@@ -67,6 +70,17 @@ const UserSchema = new Schema<IUser>({
   },
   resetTokenExpiry: {
     type: Date,
+  },
+  username: {
+    type: String,
+    trim: true,
+  },
+  profilePhoto: {
+    type: String,
+  },
+  hasSetUsername: {
+    type: Boolean,
+    default: false,
   },
 });
 

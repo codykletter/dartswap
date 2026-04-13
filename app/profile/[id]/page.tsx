@@ -18,6 +18,13 @@ interface Listing {
   price: number;
   category: string;
   imageUrl?: string;
+  images?: string[];
+  seller: {
+    id: string;
+    name: string;
+    username?: string;
+    profilePhoto?: string;
+  };
   status: string;
   createdAt: string;
 }

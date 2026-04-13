@@ -17,6 +17,8 @@ interface Listing {
   seller: {
     id: string;
     name: string;
+    username?: string;
+    profilePhoto?: string;
   };
   status: string;
   createdAt: string;

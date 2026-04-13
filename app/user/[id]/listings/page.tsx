@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
+import Image from 'next/image';
 import ListingCard from '@/components/ListingCard';
 import Link from 'next/link';
 
@@ -16,6 +17,8 @@ interface Listing {
   seller: {
     id: string;
     name: string;
+    username?: string;
+    profilePhoto?: string;
   };
   status: string;
   createdAt: string;
@@ -24,6 +27,8 @@ interface Listing {
 interface User {
   id: string;
   name: string;
+  username?: string;
+  profilePhoto?: string;
   email: string;
   createdAt: string;
 }
@@ -104,16 +109,39 @@ export default function UserListingsPage() {
     month: 'long',
   });
 
+  // Get user display name - prefer username, fallback to name
+  const userDisplayName = user.username || user.name;
+  
+  // Get user initials for placeholder avatar
+  const userInitials = user.name
+    .split(' ')
+    .map(n => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* User Info Header */}
       <div className="card mb-8">
         <div className="flex items-center gap-4">
-          <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center text-white text-3xl font-bold">
-            {user.name.charAt(0).toUpperCase()}
-          </div>
+          {/* Profile Photo or Placeholder */}
+          {user.profilePhoto ? (
+            <div className="relative w-20 h-20 rounded-full overflow-hidden flex-shrink-0">
+              <Image
+                src={user.profilePhoto}
+                alt={userDisplayName}
+                fill
+                className="object-cover"
+              />
+            </div>
+          ) : (
+            <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center text-white text-3xl font-bold flex-shrink-0">
+              {userInitials}
+            </div>
+          )}
           <div>
-            <h1 className="text-3xl font-bold text-text">{user.name}'s Listings</h1>
+            <h1 className="text-3xl font-bold text-text">{userDisplayName}'s Listings</h1>
             <p className="text-text-secondary">Member since {memberSince}</p>
           </div>
         </div>

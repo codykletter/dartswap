@@ -82,7 +82,7 @@ export async function getCurrentUser(): Promise<UserTokenPayload | null> {
 export async function getUserFromDatabase(userId: string) {
   try {
     await connectDB();
-    const user = await User.findById(userId).select('name email isVerified');
+    const user = await User.findById(userId).select('name email isVerified username profilePhoto hasSetUsername');
     return user;
   } catch (error) {
     console.error('Error fetching user from database:', error);

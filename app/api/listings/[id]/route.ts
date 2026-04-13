@@ -23,7 +23,7 @@ export async function GET(
     }
 
     const listing = await Listing.findById(id)
-      .populate('seller', 'name email createdAt')
+      .populate('seller', 'name username profilePhoto email createdAt')
       .lean();
 
     if (!listing) {
@@ -45,6 +45,8 @@ export async function GET(
         seller: {
           id: (listing.seller as any)._id.toString(),
           name: (listing.seller as any).name,
+          username: (listing.seller as any).username,
+          profilePhoto: (listing.seller as any).profilePhoto,
           email: (listing.seller as any).email,
           memberSince: (listing.seller as any).createdAt,
         },

@@ -40,28 +40,23 @@ export default function Navbar() {
                       Sell Item
                     </Link>
                     <Link
-                      href="/my-listings"
-                      className="text-text hover:text-primary transition-colors"
-                    >
-                      My Listings
-                    </Link>
-                    <Link
                       href="/messages"
                       className="text-text hover:text-primary transition-colors"
                     >
                       Messages
                     </Link>
-                    <div className="flex items-center space-x-3">
-                      <span className="text-text-secondary text-sm">
-                        {user.name}
-                      </span>
-                      <button
-                        onClick={handleLogout}
-                        className="text-text hover:text-primary transition-colors text-sm"
-                      >
-                        Logout
-                      </button>
-                    </div>
+                    <Link
+                      href="/profile"
+                      className="text-text hover:text-primary transition-colors"
+                    >
+                      Profile
+                    </Link>
+                    <button
+                      onClick={handleLogout}
+                      className="text-text hover:text-primary transition-colors"
+                    >
+                      Logout
+                    </button>
                   </>
                 ) : (
                   <>
