@@ -50,6 +50,7 @@ export async function POST(request: NextRequest) {
         id: user._id.toString(),
         name: user.name,
         email: user.email,
+        isVerified: user.isVerified,
       },
     });
   } catch (error: any) {

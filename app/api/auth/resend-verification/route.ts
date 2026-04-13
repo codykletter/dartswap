@@ -50,9 +50,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if we need to generate a new code
-    const needsNewCode = 
-      !user.verificationCode || 
-      !user.verificationCodeExpiry || 
+    const needsNewCode =
+      !user.verificationCode ||
+      !user.verificationCodeExpiry ||
       user.verificationCodeExpiry < new Date() ||
       user.verificationAttempts >= 5;
 
@@ -64,14 +64,19 @@ export async function POST(request: NextRequest) {
     user.verificationCodeExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
     user.lastCodeSentAt = new Date();
     user.verificationAttempts = 0;
-    
     await user.save();
 
     // Send the verification email
     const emailSent = await sendVerificationEmail(user.email, user.name, newCode);
     
+    
     if (!emailSent) {
-      console.warn('Verification email could not be sent, but code was saved');
+      // Still return success since code was saved, but warn user
+      return NextResponse.json({
+        success: true,
+        message: 'Verification code generated but email may not have been sent. Please check your email or contact support.',
+        warning: 'Email delivery issue detected'
+      });
     }
 
     return NextResponse.json({

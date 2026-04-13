@@ -12,6 +12,8 @@ export interface IUser extends Document {
   verificationAttempts: number;
   isVerified: boolean;
   lastCodeSentAt?: Date;
+  resetToken?: string;
+  resetTokenExpiry?: Date;
 }
 
 const UserSchema = new Schema<IUser>({
@@ -57,6 +59,13 @@ const UserSchema = new Schema<IUser>({
     default: false,
   },
   lastCodeSentAt: {
+    type: Date,
+  },
+  resetToken: {
+    type: String,
+    select: false, // Don't include reset token in queries by default
+  },
+  resetTokenExpiry: {
     type: Date,
   },
 });

@@ -24,7 +24,7 @@ export default function VerificationGuard({ children }: VerificationGuardProps) 
     }
 
     // If user is authenticated but not verified, redirect to verify-email
-    if (!user.isVerified) {
+    if (user.isVerified === false) {
       router.push('/verify-email');
       return;
     }
@@ -40,7 +40,7 @@ export default function VerificationGuard({ children }: VerificationGuardProps) 
   }
 
   // Don't render content if not authenticated or not verified
-  if (!user || !user.isVerified) {
+  if (!user || user.isVerified === false) {
     return null;
   }
 
