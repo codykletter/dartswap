@@ -7,11 +7,11 @@ interface ImageCropperProps {
   imageUrl: string;
   onCropComplete: (croppedImageUrl: string) => void;
   onCancel: () => void;
+  aspectRatio?: number; // Optional: 4/3 for listings, 1 for profiles. Defaults to 4/3
 }
 
-export default function ImageCropper({ imageUrl, onCropComplete, onCancel }: ImageCropperProps) {
-  // Fixed aspect ratio for all photos (4:3 standard photo aspect ratio)
-  const ASPECT_RATIO = 4 / 3;
+export default function ImageCropper({ imageUrl, onCropComplete, onCancel, aspectRatio = 4 / 3 }: ImageCropperProps) {
+  const ASPECT_RATIO = aspectRatio;
   
   const [crop, setCrop] = useState({ x: 0, y: 0, size: 200 }); // size controls both width and height based on aspect ratio
   const [isDragging, setIsDragging] = useState(false);
@@ -74,33 +74,82 @@ export default function ImageCropper({ imageUrl, onCropComplete, onCancel }: Ima
     const img = imageRef.current;
     const container = containerRef.current;
     
-    // Calculate scale factor
-    const scaleX = img.naturalWidth / container.offsetWidth;
-    const scaleY = img.naturalHeight / container.offsetHeight;
+    // Calculate the displayed image dimensions (accounting for object-contain)
+    const containerWidth = container.offsetWidth;
+    const containerHeight = container.offsetHeight;
+    const imageAspect = img.naturalWidth / img.naturalHeight;
+    const containerAspect = containerWidth / containerHeight;
+    
+    let displayedWidth, displayedHeight, offsetX, offsetY;
+    
+    if (imageAspect > containerAspect) {
+      // Image is wider - will have black bars on top/bottom
+      displayedWidth = containerWidth;
+      displayedHeight = containerWidth / imageAspect;
+      offsetX = 0;
+      offsetY = (containerHeight - displayedHeight) / 2;
+    } else {
+      // Image is taller - will have black bars on left/right
+      displayedHeight = containerHeight;
+      displayedWidth = containerHeight * imageAspect;
+      offsetX = (containerWidth - displayedWidth) / 2;
+      offsetY = 0;
+    }
 
     const cropWidth = crop.size;
     const cropHeight = crop.size / ASPECT_RATIO;
 
-    // Set canvas size to fixed aspect ratio (4:3)
+    // Set canvas size to target aspect ratio
     // Use a standard size for consistency
-    const outputWidth = 1200;
-    const outputHeight = 900; // 1200 / (4/3) = 900
+    const outputWidth = ASPECT_RATIO >= 1 ? 1200 : 900;
+    const outputHeight = outputWidth / ASPECT_RATIO;
     
     canvas.width = outputWidth;
     canvas.height = outputHeight;
 
-    // Draw cropped image
-    ctx.drawImage(
-      img,
-      crop.x * scaleX,
-      crop.y * scaleY,
-      cropWidth * scaleX,
-      cropHeight * scaleY,
-      0,
-      0,
-      outputWidth,
-      outputHeight
-    );
+    // Fill with black background first
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, outputWidth, outputHeight);
+
+    // Calculate which part of the crop area overlaps with the actual image
+    const cropLeft = crop.x;
+    const cropTop = crop.y;
+    const cropRight = crop.x + cropWidth;
+    const cropBottom = crop.y + cropHeight;
+    
+    // Calculate overlap between crop area and displayed image
+    const overlapLeft = Math.max(cropLeft, offsetX);
+    const overlapTop = Math.max(cropTop, offsetY);
+    const overlapRight = Math.min(cropRight, offsetX + displayedWidth);
+    const overlapBottom = Math.min(cropTop + cropHeight, offsetY + displayedHeight);
+    
+    // Only draw if there's an overlap
+    if (overlapRight > overlapLeft && overlapBottom > overlapTop) {
+      // Calculate source coordinates in the natural image
+      const sourceX = ((overlapLeft - offsetX) / displayedWidth) * img.naturalWidth;
+      const sourceY = ((overlapTop - offsetY) / displayedHeight) * img.naturalHeight;
+      const sourceWidth = ((overlapRight - overlapLeft) / displayedWidth) * img.naturalWidth;
+      const sourceHeight = ((overlapBottom - overlapTop) / displayedHeight) * img.naturalHeight;
+      
+      // Calculate destination coordinates on canvas
+      const destX = ((overlapLeft - cropLeft) / cropWidth) * outputWidth;
+      const destY = ((overlapTop - cropTop) / cropHeight) * outputHeight;
+      const destWidth = ((overlapRight - overlapLeft) / cropWidth) * outputWidth;
+      const destHeight = ((overlapBottom - overlapTop) / cropHeight) * outputHeight;
+      
+      // Draw the overlapping portion
+      ctx.drawImage(
+        img,
+        sourceX,
+        sourceY,
+        sourceWidth,
+        sourceHeight,
+        destX,
+        destY,
+        destWidth,
+        destHeight
+      );
+    }
 
     // Convert to base64
     const croppedImageUrl = canvas.toDataURL('image/jpeg', 0.9);

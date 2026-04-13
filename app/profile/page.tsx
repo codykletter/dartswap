@@ -312,6 +312,7 @@ export default function ProfilePage() {
             imageUrl={cropperImage}
             onCropComplete={handleCropComplete}
             onCancel={handleCropCancel}
+            aspectRatio={1}
           />
         )}
         
