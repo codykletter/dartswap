@@ -40,17 +40,6 @@ export default function ListingDetailPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showHideModal, setShowHideModal] = useState(false);
 
-  // Redirect unauthenticated users to login
-  useEffect(() => {
-    if (!mounted || authLoading) {
-      return;
-    }
-
-    if (!user) {
-      router.push(`/login?redirect=/listings/${params.id}`);
-    }
-  }, [user, authLoading, mounted, router, params.id]);
-
   useEffect(() => {
     const fetchListing = async () => {
       try {
