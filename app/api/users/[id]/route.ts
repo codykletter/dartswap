@@ -24,7 +24,7 @@ export async function GET(
 
     // Fetch user (excluding sensitive fields)
     const user = await User.findById(id)
-      .select('name createdAt')
+      .select('name username profilePhoto createdAt')
       .lean();
 
     if (!user) {
@@ -48,6 +48,8 @@ export async function GET(
       user: {
         id: user._id.toString(),
         name: user.name,
+        username: user.username,
+        profilePhoto: user.profilePhoto,
         createdAt: user.createdAt,
       },
       listings: listings.map((listing) => ({

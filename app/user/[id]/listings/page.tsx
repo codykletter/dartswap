@@ -122,6 +122,27 @@ export default function UserListingsPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Back button */}
+      <Link
+        href="/"
+        className="inline-flex items-center text-primary hover:text-primary-dark mb-6 transition-colors"
+      >
+        <svg
+          className="w-5 h-5 mr-2"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M15 19l-7-7 7-7"
+          />
+        </svg>
+        Back to Listings
+      </Link>
+
       {/* User Info Header */}
       <div className="card mb-8">
         <div className="flex items-center gap-4">
@@ -164,7 +185,7 @@ export default function UserListingsPage() {
             />
           </svg>
           <p className="text-text-secondary text-lg mb-4">
-            {user.name} hasn't created any listings yet.
+            {userDisplayName} hasn't created any listings yet.
           </p>
           <Link href="/" className="btn-primary inline-block">
             Browse All Listings
