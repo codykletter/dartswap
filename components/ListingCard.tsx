@@ -20,6 +20,9 @@ interface ListingCardProps {
       profilePhoto?: string;
     };
     status: string;
+    gender?: 'mens' | 'womens' | 'unisex';
+    clothingSubcategory?: 'tops' | 'bottoms' | 'dresses-skirts' | 'shoes' | 'outerwear';
+    size?: string;
   };
 }
 
@@ -79,6 +82,22 @@ export default function ListingCard({ listing }: ListingCardProps) {
         <p className="text-2xl font-bold text-primary mb-2">
           {listing.price === 0 ? 'Free' : `$${listing.price.toFixed(2)}`}
         </p>
+        
+        {/* Clothing info - only show for clothing listings */}
+        {listing.category === 'Clothing' && listing.gender && listing.size && (
+          <div className="flex items-center gap-2 text-xs text-text-secondary mb-2">
+            <span className="capitalize">{listing.gender}</span>
+            <span>•</span>
+            <span>Size {listing.size}</span>
+            {listing.clothingSubcategory && (
+              <>
+                <span>•</span>
+                <span className="capitalize">{listing.clothingSubcategory.replace('-', '/')}</span>
+              </>
+            )}
+          </div>
+        )}
+        
         <div className="flex items-center justify-between text-sm">
           <span className="text-text-secondary">{listing.category}</span>
           <button

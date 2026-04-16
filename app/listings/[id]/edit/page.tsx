@@ -29,6 +29,15 @@ export default function EditListingPage() {
   const [cropperImage, setCropperImage] = useState<string | null>(null);
   const [cropImageIndex, setCropImageIndex] = useState<number | null>(null);
   const [pendingImageFile, setPendingImageFile] = useState<File | null>(null);
+  
+  // Clothing-specific fields
+  const [gender, setGender] = useState<'mens' | 'womens' | 'unisex'>('mens');
+  const [clothingSubcategory, setClothingSubcategory] = useState<'tops' | 'bottoms' | 'dresses-skirts' | 'shoes' | 'outerwear'>('tops');
+  const [size, setSize] = useState('');
+  
+  // Men's bottoms waist/length fields
+  const [waist, setWaist] = useState('');
+  const [length, setLength] = useState('');
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -64,6 +73,20 @@ export default function EditListingPage() {
       setPrice(listing.price.toString());
       setCategory(listing.category);
       setStatus(listing.status);
+
+      // Populate clothing fields if they exist
+      if (listing.gender) setGender(listing.gender);
+      if (listing.clothingSubcategory) setClothingSubcategory(listing.clothingSubcategory);
+      if (listing.size) {
+        // For men's bottoms, parse the size to extract waist and length
+        if (listing.gender === 'mens' && listing.clothingSubcategory === 'bottoms' && listing.size.includes('x')) {
+          const [w, l] = listing.size.split('x');
+          setWaist(w);
+          setLength(l);
+        } else {
+          setSize(listing.size);
+        }
+      }
 
       // Convert existing images to preview format
       if (listing.images && listing.images.length > 0) {
@@ -199,8 +222,27 @@ export default function EditListingPage() {
         throw new Error('At least one image is required.');
       }
 
+      // Validate clothing fields if category is Clothing
+      if (category === 'Clothing') {
+        if (!gender || !clothingSubcategory) {
+          throw new Error('Gender and subcategory are required for clothing items.');
+        }
+        
+        // For men's bottoms, validate waist and length
+        if (gender === 'mens' && clothingSubcategory === 'bottoms') {
+          if (!waist || !length) {
+            throw new Error('Waist and length are required for men\'s bottoms.');
+          }
+        } else {
+          // For all other clothing, validate size
+          if (!size) {
+            throw new Error('Size is required for clothing items.');
+          }
+        }
+      }
+
       // Prepare listing data
-      const listingData = {
+      const listingData: any = {
         title: title.trim(),
         description: description.trim(),
         price: priceNum,
@@ -208,6 +250,19 @@ export default function EditListingPage() {
         status,
         images: images.map(img => img.dataUrl),
       };
+
+      // Add clothing fields if category is Clothing
+      if (category === 'Clothing') {
+        listingData.gender = gender;
+        listingData.clothingSubcategory = clothingSubcategory;
+        
+        // For men's bottoms, combine waist and length into size
+        if (gender === 'mens' && clothingSubcategory === 'bottoms') {
+          listingData.size = `${waist}x${length}`;
+        } else {
+          listingData.size = size;
+        }
+      }
 
       // Submit to API
       const response = await fetch(`/api/listings/${params.id}`, {
@@ -323,7 +378,17 @@ export default function EditListingPage() {
               <select
                 id="category"
                 value={category}
-                onChange={(e) => setCategory(e.target.value)}
+                onChange={(e) => {
+                  setCategory(e.target.value);
+                  // Clear clothing fields when switching away from Clothing
+                  if (e.target.value !== 'Clothing') {
+                    setGender('mens');
+                    setClothingSubcategory('tops');
+                    setSize('');
+                    setWaist('');
+                    setLength('');
+                  }
+                }}
                 className="input"
               >
                 <option value="General">General</option>
@@ -335,6 +400,194 @@ export default function EditListingPage() {
                 <option value="Other">Other</option>
               </select>
             </div>
+
+            {/* Clothing-specific fields - only show when Clothing is selected */}
+            {category === 'Clothing' && (
+              <>
+                {/* Gender */}
+                <div>
+                  <label className="block text-sm font-medium text-text mb-2">
+                    Gender *
+                  </label>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setGender('mens');
+                        // Reset size fields when changing gender
+                        setSize('');
+                        setWaist('');
+                        setLength('');
+                      }}
+                      className={`flex-1 py-2 px-4 rounded-lg border-2 transition-colors ${
+                        gender === 'mens'
+                          ? 'border-primary bg-primary text-white'
+                          : 'border-border bg-surface hover:border-primary'
+                      }`}
+                    >
+                      Mens
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setGender('womens');
+                        // Reset size fields when changing gender
+                        setSize('');
+                        setWaist('');
+                        setLength('');
+                      }}
+                      className={`flex-1 py-2 px-4 rounded-lg border-2 transition-colors ${
+                        gender === 'womens'
+                          ? 'border-primary bg-primary text-white'
+                          : 'border-border bg-surface hover:border-primary'
+                      }`}
+                    >
+                      Womens
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setGender('unisex');
+                        // Reset size fields when changing gender
+                        setSize('');
+                        setWaist('');
+                        setLength('');
+                      }}
+                      className={`flex-1 py-2 px-4 rounded-lg border-2 transition-colors ${
+                        gender === 'unisex'
+                          ? 'border-primary bg-primary text-white'
+                          : 'border-border bg-surface hover:border-primary'
+                      }`}
+                    >
+                      Unisex
+                    </button>
+                  </div>
+                </div>
+
+                {/* Subcategory */}
+                <div>
+                  <label htmlFor="clothingSubcategory" className="block text-sm font-medium text-text mb-2">
+                    Subcategory *
+                  </label>
+                  <select
+                    id="clothingSubcategory"
+                    value={clothingSubcategory}
+                    onChange={(e) => {
+                      setClothingSubcategory(e.target.value as any);
+                      // Reset size fields when subcategory changes
+                      setSize('');
+                      setWaist('');
+                      setLength('');
+                    }}
+                    className="input"
+                  >
+                    <option value="tops">Tops</option>
+                    <option value="bottoms">Bottoms</option>
+                    <option value="dresses-skirts">Dresses/Skirts</option>
+                    <option value="shoes">Shoes</option>
+                    <option value="outerwear">Outerwear</option>
+                  </select>
+                </div>
+
+                {/* Size - Men's Bottoms use Waist/Length, others use standard sizes */}
+                {gender === 'mens' && clothingSubcategory === 'bottoms' ? (
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* Waist */}
+                    <div>
+                      <label htmlFor="waist" className="block text-sm font-medium text-text mb-2">
+                        Waist *
+                      </label>
+                      <select
+                        id="waist"
+                        value={waist}
+                        onChange={(e) => setWaist(e.target.value)}
+                        className="input"
+                        required={category === 'Clothing'}
+                      >
+                        <option value="">Select waist</option>
+                        <option value="28">28</option>
+                        <option value="29">29</option>
+                        <option value="30">30</option>
+                        <option value="31">31</option>
+                        <option value="32">32</option>
+                        <option value="33">33</option>
+                        <option value="34">34</option>
+                        <option value="35">35</option>
+                        <option value="36">36</option>
+                        <option value="38">38</option>
+                        <option value="40">40</option>
+                        <option value="42">42</option>
+                      </select>
+                    </div>
+                    
+                    {/* Length */}
+                    <div>
+                      <label htmlFor="length" className="block text-sm font-medium text-text mb-2">
+                        Length *
+                      </label>
+                      <select
+                        id="length"
+                        value={length}
+                        onChange={(e) => setLength(e.target.value)}
+                        className="input"
+                        required={category === 'Clothing'}
+                      >
+                        <option value="">Select length</option>
+                        <option value="28">28</option>
+                        <option value="30">30</option>
+                        <option value="32">32</option>
+                        <option value="34">34</option>
+                        <option value="36">36</option>
+                      </select>
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <label htmlFor="size" className="block text-sm font-medium text-text mb-2">
+                      Size *
+                    </label>
+                    <select
+                      id="size"
+                      value={size}
+                      onChange={(e) => setSize(e.target.value)}
+                      className="input"
+                      required={category === 'Clothing'}
+                    >
+                      <option value="">Select a size</option>
+                      {clothingSubcategory === 'shoes' ? (
+                        <>
+                          <option value="5">5</option>
+                          <option value="5.5">5.5</option>
+                          <option value="6">6</option>
+                          <option value="6.5">6.5</option>
+                          <option value="7">7</option>
+                          <option value="7.5">7.5</option>
+                          <option value="8">8</option>
+                          <option value="8.5">8.5</option>
+                          <option value="9">9</option>
+                          <option value="9.5">9.5</option>
+                          <option value="10">10</option>
+                          <option value="10.5">10.5</option>
+                          <option value="11">11</option>
+                          <option value="11.5">11.5</option>
+                          <option value="12">12</option>
+                          <option value="13">13</option>
+                        </>
+                      ) : (
+                        <>
+                          <option value="XS">XS</option>
+                          <option value="S">S</option>
+                          <option value="M">M</option>
+                          <option value="L">L</option>
+                          <option value="XL">XL</option>
+                          <option value="XXL">XXL</option>
+                        </>
+                      )}
+                    </select>
+                  </div>
+                )}
+              </>
+            )}
 
             {/* Status */}
             <div>

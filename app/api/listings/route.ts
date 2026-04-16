@@ -34,6 +34,9 @@ export async function GET(request: NextRequest) {
         },
         status: listing.status,
         createdAt: listing.createdAt,
+        gender: listing.gender,
+        clothingSubcategory: listing.clothingSubcategory,
+        size: listing.size,
       })),
     });
   } catch (error) {
@@ -105,6 +108,9 @@ export async function POST(request: NextRequest) {
           seller: listing.seller,
           status: listing.status,
           createdAt: listing.createdAt,
+          gender: listing.gender,
+          clothingSubcategory: listing.clothingSubcategory,
+          size: listing.size,
         },
       },
       { status: 201 }

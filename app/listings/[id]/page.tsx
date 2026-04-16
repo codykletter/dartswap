@@ -25,6 +25,9 @@ interface Listing {
   };
   status: string;
   createdAt: string;
+  gender?: 'mens' | 'womens' | 'unisex';
+  clothingSubcategory?: 'tops' | 'bottoms' | 'dresses-skirts' | 'shoes' | 'outerwear';
+  size?: string;
 }
 
 export default function ListingDetailPage() {
@@ -344,6 +347,29 @@ export default function ListingDetailPage() {
           </span>
           <span>Posted on {formattedDate}</span>
         </div>
+
+        {/* Clothing-specific info - only show for clothing listings */}
+        {listing.category === 'Clothing' && listing.gender && listing.clothingSubcategory && listing.size && (
+          <div className="mb-6 pb-6 border-b border-border">
+            <h2 className="text-xl font-semibold text-text mb-3">Clothing Details</h2>
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <p className="text-sm text-text-secondary mb-1">Gender</p>
+                <p className="text-text font-medium capitalize">{listing.gender}</p>
+              </div>
+              <div>
+                <p className="text-sm text-text-secondary mb-1">Type</p>
+                <p className="text-text font-medium capitalize">
+                  {listing.clothingSubcategory.replace('-', '/')}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-text-secondary mb-1">Size</p>
+                <p className="text-text font-medium">{listing.size}</p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Description */}
         <div className="mb-6 pb-6 border-b border-border">

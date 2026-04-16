@@ -27,9 +27,22 @@ export const createListingSchema = z.object({
   category: z.string().optional().default('General'),
   imageUrl: z.string().url('Invalid image URL').optional(),
   images: z.array(z.string()).min(1, 'At least one image is required').max(4, 'Maximum 4 images allowed').optional(),
+  // Clothing-specific fields
+  gender: z.enum(['mens', 'womens', 'unisex']).optional(),
+  clothingSubcategory: z.enum(['tops', 'bottoms', 'dresses-skirts', 'shoes', 'outerwear']).optional(),
+  size: z.string().optional(),
 }).refine(
   (data) => data.images || data.imageUrl,
   { message: 'Either images array or imageUrl is required' }
+).refine(
+  (data) => {
+    // If category is Clothing, require gender, clothingSubcategory, and size
+    if (data.category === 'Clothing') {
+      return data.gender && data.clothingSubcategory && data.size;
+    }
+    return true;
+  },
+  { message: 'Gender, subcategory, and size are required for clothing items' }
 );
 
 // Messaging validations

@@ -52,6 +52,9 @@ export async function GET(
         },
         status: listing.status,
         createdAt: listing.createdAt,
+        gender: listing.gender,
+        clothingSubcategory: listing.clothingSubcategory,
+        size: listing.size,
       },
     });
   } catch (error) {
@@ -109,15 +112,38 @@ export async function PUT(
 
     // Parse request body
     const body = await request.json();
-    const { title, description, price, category, images, status } = body;
+    const { title, description, price, category, images, status, gender, clothingSubcategory, size } = body;
+
+    // Validate clothing fields if category is Clothing
+    if (category === 'Clothing' || listing.category === 'Clothing') {
+      if (category === 'Clothing' && (!gender || !clothingSubcategory || !size)) {
+        return NextResponse.json(
+          { error: 'Gender, subcategory, and size are required for clothing items' },
+          { status: 400 }
+        );
+      }
+    }
 
     // Update fields if provided
     if (title !== undefined) listing.title = title;
     if (description !== undefined) listing.description = description;
     if (price !== undefined) listing.price = price;
-    if (category !== undefined) listing.category = category;
+    if (category !== undefined) {
+      listing.category = category;
+      // Clear clothing fields if switching away from Clothing category
+      if (category !== 'Clothing') {
+        listing.gender = undefined;
+        listing.clothingSubcategory = undefined;
+        listing.size = undefined;
+      }
+    }
     if (images !== undefined) listing.images = images;
     if (status !== undefined) listing.status = status;
+    
+    // Update clothing-specific fields
+    if (gender !== undefined) listing.gender = gender;
+    if (clothingSubcategory !== undefined) listing.clothingSubcategory = clothingSubcategory;
+    if (size !== undefined) listing.size = size;
 
     await listing.save();
 
@@ -141,6 +167,9 @@ export async function PUT(
         },
         status: listing.status,
         createdAt: listing.createdAt,
+        gender: listing.gender,
+        clothingSubcategory: listing.clothingSubcategory,
+        size: listing.size,
       },
     });
   } catch (error) {

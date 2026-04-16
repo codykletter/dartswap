@@ -12,6 +12,10 @@ export interface IListing extends Document {
   seller: mongoose.Types.ObjectId | IUser;
   status: 'active' | 'sold' | 'deleted' | 'hidden';
   createdAt: Date;
+  // Clothing-specific fields
+  gender?: 'mens' | 'womens' | 'unisex';
+  clothingSubcategory?: 'tops' | 'bottoms' | 'dresses-skirts' | 'shoes' | 'outerwear';
+  size?: string;
 }
 
 const ListingSchema = new Schema<IListing>({
@@ -63,6 +67,21 @@ const ListingSchema = new Schema<IListing>({
   createdAt: {
     type: Date,
     default: Date.now,
+  },
+  // Clothing-specific fields
+  gender: {
+    type: String,
+    enum: ['mens', 'womens', 'unisex'],
+    required: false,
+  },
+  clothingSubcategory: {
+    type: String,
+    enum: ['tops', 'bottoms', 'dresses-skirts', 'shoes', 'outerwear'],
+    required: false,
+  },
+  size: {
+    type: String,
+    required: false,
   },
 });
 
